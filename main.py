@@ -11,23 +11,17 @@ PORT = int(os.getenv("PORT", 8558))
 CHAT_ID = os.getenv("CHAT_ID")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
+if not WEBHOOK_URL:
+    raise ValueError("WEBHOOK_URL is not set in environment variables")
+
 dbot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-
-@app.route("/set_webhook", methods=["GET", "POST"])
-def set_webhook():
-    webhook_url = f"{WEBHOOK_URL}/webhook"
-    try:
-        dbot.remove_webhook()
-        dbot.set_webhook(url=webhook_url)
-        logging.info(f"Webhook set to {webhook_url}")
-        return jsonify({"status": "success", "webhook_url": webhook_url}), 200
-    except Exception as e:
-        logging.error(f"Failed to set webhook: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
+dbot.remove_webhook()
+dbot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
+logging.info(f"Webhook set to {WEBHOOK_URL}/webhook")
 
 
 @app.route("/webhook", methods=["POST"])
@@ -44,7 +38,7 @@ def webhook():
         message += f"*Status:* {status}\n"
         message += f"*Description:* {description}"
 
-        dbot.send_message(chat_id=CHAT_ID, text=message)
+        dbot.send_message(chat_id=CHAT_ID, text=message, parse_mode="Markdown")
         logging.info(f"Sent message: {message}")
 
         return jsonify({"status": "success"}), 200
