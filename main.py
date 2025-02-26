@@ -9,34 +9,27 @@ load_dotenv()
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.getenv("PORT", 8558))
 CHAT_ID = os.getenv("CHAT_ID")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
-if not WEBHOOK_URL:
-    raise ValueError("WEBHOOK_URL is not set in environment variables")
+if not TOKEN or not CHAT_ID:
+    raise ValueError("TELEGRAM_BOT_TOKEN or CHAT_ID is not set in environment variables")
 
 dbot = telebot.TeleBot(TOKEN)
 app = Flask(__name__)
 
 logging.basicConfig(level=logging.INFO)
 
-dbot.remove_webhook()
-dbot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
-logging.info(f"Webhook set to {WEBHOOK_URL}/webhook")
 
-
-@app.route("/webhook", methods=["POST"])
+@app.route("/unhealthy", methods=["POST"])
 def webhook():
     try:
         data = request.get_json()
 
-        status = data.get("status", "Unknown")
-        name = data.get("name", "Unknown")
-        description = data.get("description", "No description")
+        status = data.get("status", "Unknown Status")
+        description = data.get("description", "No details available")
 
-        message = f"\U0001F6A8 *Health Check Alert!*\n\n"
-        message += f"*Service:* {name}\n"
+        message = f"\U0001F6A8 *Incidents Health Check Alert!*\n\n"
         message += f"*Status:* {status}\n"
-        message += f"*Description:* {description}"
+        message += f"*Description:* {description}\n"
 
         dbot.send_message(chat_id=CHAT_ID, text=message, parse_mode="Markdown")
         logging.info(f"Sent message: {message}")
